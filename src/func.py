@@ -27,4 +27,4 @@ def is_linear_relationship(df, parameters, target, thresh=.5):
     if r>thresh:
         print("R-squared of {} is {}. Impute na w/ linear regression.".format(target, r))
     else:
-        print("R-squared of {} is {}. Impute na w/ mean or drop column.".format(target, r))
+        print("R-squared of {} is {}. Impute na w/ median or drop column.".format(target, r))
