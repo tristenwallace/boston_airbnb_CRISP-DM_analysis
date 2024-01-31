@@ -130,8 +130,17 @@ def bootstrap_t_pvalue(df, group, test, equal_var=False, B=10000, plot=False):
 
 ######################################################################
 
+
+# Functions for analyzing feature importance
 def normalize_data(df):
+    ''' Normalize data
     
+    INPUT
+        df (dataframe): Cleaned data, typically training data after split
+    
+    OUTPUT
+        df_norm (datafrem): normalized dataframe
+    '''
     
     normalizer = MinMaxScaler()
     
@@ -145,9 +154,10 @@ def normalize_data(df):
     
     return df_norm
 
-# Functions for analyzing feature importance
+
 def create_regression_mod(X, y, test_size=.3, rand_state=42):
-    '''
+    ''' Create regression model
+    
     INPUT:
         X (pandas dataframe): feature matrix
         y (pandas dataframe): target variable
@@ -178,7 +188,8 @@ def create_regression_mod(X, y, test_size=.3, rand_state=42):
 
 
 def coef_weights(coefficients, X_train):
-    '''
+    ''' Get coef for each feature
+    
     INPUT:
         coefficients - the coefficients of the linear model 
         X_train - the training data, so the column names can be used
@@ -186,9 +197,9 @@ def coef_weights(coefficients, X_train):
     OUTPUT:
         coefs_df - a dataframe holding the coefficient, estimate, and abs(estimate)
     
-    Provides a dataframe that can be used to understand the most influential coefficients
-    in a linear model by providing the coefficient estimates along with the name of the 
-    variable attached to the coefficient.
+        Provides a dataframe that can be used to understand the most influential coefficients
+        in a linear model by providing the coefficient estimates along with the name of the 
+        variable attached to the coefficient.
     '''
     coefs_df = pd.DataFrame()
     coefs_df['est_int'] = X_train.columns
