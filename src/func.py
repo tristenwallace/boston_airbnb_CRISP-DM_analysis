@@ -4,8 +4,12 @@ import scipy.stats as stats
 import numpy as np
 from matplotlib import pyplot as plt
 
+######################################################################
+
+### functions for imputing missing values with linear regression
 def is_linear_relationship(df, parameters, target, thresh=.5):
-    '''
+    ''' Checks if target variable has linear relationship with params
+    
     INPUT
         df (pandas dataframe)
         parameters (list of str): List of column names to predict target
@@ -13,8 +17,8 @@ def is_linear_relationship(df, parameters, target, thresh=.5):
         thresh (float): minimum r-squared value to consider imputing w/ linear reg
     
     OUTPUT
-        Prints r squared value and whether to use linear regression to impute missing values.
-        Does not return a value
+        Prints r squared value and whether to use linear regression to impute
+        missing values
     '''
 
     # drop NaN values    
@@ -33,11 +37,19 @@ def is_linear_relationship(df, parameters, target, thresh=.5):
         print("R-squared of {} is {}. Impute na w/ median or drop column.".format(target, r))
 
 
+######################################################################
 
+
+### functions for bootstrapping T-Test 
 def boot_matrix(z, B):
-    """Bootstrap sample
+    """ Create matrix of bootstrap samples
     
-    Returns all bootstrap samples in a matrix
+    INPUT
+        z (series): pandas series pre-filtered by split_hypothesis
+        B (int): Number of times to bootstrap
+    
+    OUTPUT
+        Returns bootstraped samples in a matrix
     """
     
     bootsamples = []
@@ -47,8 +59,20 @@ def boot_matrix(z, B):
 
 
 def  split_hypothesis(df, group, test):
+    ''' Creates series to use in bootstrapping 
+    
+    INPUT
+        df (dataframe): dataframe with sample data
+        group (str): column name for group feature
+        test (str): column name for feature being tested
+    
+    OUTPUT
+        x (series): pandas series filtered from dataframe by test column 
+                    for which the group column is true
+        y (series): pandas series filtered from dataframe by test column
+                    for which the group column is false
     '''
-    '''
+    
     x = df.loc[df[group] == True, test]
     y = df.loc[df[group] == False, test]
     
@@ -56,9 +80,23 @@ def  split_hypothesis(df, group, test):
 
 
 def bootstrap_t_pvalue(df, group, test, equal_var=False, B=10000, plot=False):
-    """Bootstrap p values for two-sample t test
+    """ Bootstrap p values for two-sample t test
     
-    Returns boostrap p value, test statistics and parametric p value
+    INPUT
+        df (dataframe): dataframe with sample data
+        group (str): column name for group feature
+        test (str): column name for feature being tested
+        equal_var (bool): default performs Welch’s t-test. Setting to 'True'
+                            performs standard independent 2 sample test that 
+                            assumes equal population variances
+        B (int): Number of times to bootstrap
+        plot (bool): Whether or not to plot results
+        
+    
+    OUTPUT
+        test (str): feature name being tested
+        p (float): boostrapped p value 
+        statistic (float): T-Test statistic from original sample
     """
     
     x, y = split_hypothesis(df, group, test)
@@ -80,7 +118,6 @@ def bootstrap_t_pvalue(df, group, test, equal_var=False, B=10000, plot=False):
     
     # RESULTS
     return test, p, statistic
-    
     
     # Plot bootstrap distribution
     if plot:
