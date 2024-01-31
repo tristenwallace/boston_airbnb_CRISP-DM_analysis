@@ -3,6 +3,9 @@ import pandas as pd
 import scipy.stats as stats
 import numpy as np
 from matplotlib import pyplot as plt
+from sklearn.linear_model import RidgeCV
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 ######################################################################
 
@@ -123,3 +126,74 @@ def bootstrap_t_pvalue(df, group, test, equal_var=False, B=10000, plot=False):
     if plot:
         plt.figure()
         plt.hist(sampling_distribution, bins="fd") 
+        
+
+######################################################################
+
+
+# Functions for analyzing feature importance
+def create_regression_mod(X, y, test_size=.3, rand_state=42):
+    '''
+    INPUT:
+        X (pandas dataframe): feature matrix
+        y (pandas dataframe): target variable
+        test_size - a float between [0,1] about what proportion of data should
+                    be in the test dataset
+        rand_state - an int that is provided as the random state for splitting
+                        the data into training and test 
+    
+    OUTPUT:
+        reg - model object from sklearn
+        X_train, X_test, y_train, y_test - output from sklearn train test 
+                                            split used for optimal model
+    '''
+
+    # Split data
+    X_train, X_test, y_train, y_test = \
+    train_test_split(X, y, test_size=test_size, random_state=rand_state)
+    
+    ### Standardize data
+    scaler = StandardScaler()
+    
+    num_cols = X_train.select_dtypes('number').columns.tolist()
+    cat_cols = X_train.select_dtypes(exclude='number').columns.tolist()
+    
+    X_train_numeric_norm = pd.DataFrame(data=scaler.fit_transform \
+        (X_train[num_cols]), columns=num_cols)
+    X_train_norm = pd.merge(X_train_numeric_norm, X_train[cat_cols]. \
+        reset_index().drop('index', axis=1), left_index=True, right_index=True)
+    
+    X_test_numeric_norm = pd.DataFrame(data=scaler.fit_transform \
+                                        (X_test[num_cols]), columns=num_cols)
+    X_test_norm = pd.merge(X_test_numeric_norm, X_test[cat_cols] \
+        .reset_index().drop('index', axis=1), left_index=True, right_index=True)
+    
+    
+
+    # Fit Model
+    reg = RidgeCV()
+    reg.fit(X_train_norm, y_train)
+
+    return reg, X_train_norm, X_test_norm, y_train, y_test
+
+
+def coef_weights(coefficients, X_train):
+    '''
+    INPUT:
+        coefficients - the coefficients of the linear model 
+        X_train - the training data, so the column names can be used
+    
+    OUTPUT:
+        coefs_df - a dataframe holding the coefficient, estimate, and abs(estimate)
+    
+    Provides a dataframe that can be used to understand the most influential coefficients
+    in a linear model by providing the coefficient estimates along with the name of the 
+    variable attached to the coefficient.
+    '''
+    coefs_df = pd.DataFrame()
+    coefs_df['est_int'] = X_train.columns
+    coefs_df['coefs'] = coefficients
+    coefs_df['abs_coefs'] = np.abs(coefficients)
+    coefs_df = coefs_df.sort_values('abs_coefs', ascending=False)
+    
+    return coefs_df
