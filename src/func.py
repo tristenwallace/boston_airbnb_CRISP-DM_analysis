@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 ######################################################################
 
@@ -130,6 +130,20 @@ def bootstrap_t_pvalue(df, group, test, equal_var=False, B=10000, plot=False):
 
 ######################################################################
 
+def normalize_data(df):
+    
+    
+    normalizer = MinMaxScaler()
+    
+    num_cols = df.select_dtypes('number').columns.tolist()
+    cat_cols = df.select_dtypes(exclude='number').columns.tolist()
+    
+    num_norm = pd.DataFrame(data=normalizer.fit_transform(df[num_cols]), columns=num_cols)
+    
+    df_norm = pd.merge(num_norm, df[cat_cols].reset_index().drop \
+                ('index', axis=1), left_index=True, right_index=True)
+    
+    return df_norm
 
 # Functions for analyzing feature importance
 def create_regression_mod(X, y, test_size=.3, rand_state=42):
@@ -153,22 +167,8 @@ def create_regression_mod(X, y, test_size=.3, rand_state=42):
     train_test_split(X, y, test_size=test_size, random_state=rand_state)
     
     ### Standardize data
-    scaler = StandardScaler()
-    
-    num_cols = X_train.select_dtypes('number').columns.tolist()
-    cat_cols = X_train.select_dtypes(exclude='number').columns.tolist()
-    
-    X_train_numeric_norm = pd.DataFrame(data=scaler.fit_transform \
-        (X_train[num_cols]), columns=num_cols)
-    X_train_norm = pd.merge(X_train_numeric_norm, X_train[cat_cols]. \
-        reset_index().drop('index', axis=1), left_index=True, right_index=True)
-    
-    X_test_numeric_norm = pd.DataFrame(data=scaler.fit_transform \
-                                        (X_test[num_cols]), columns=num_cols)
-    X_test_norm = pd.merge(X_test_numeric_norm, X_test[cat_cols] \
-        .reset_index().drop('index', axis=1), left_index=True, right_index=True)
-    
-    
+    X_train_norm = normalize_data(X_train)
+    X_test_norm = normalize_data(X_test)
 
     # Fit Model
     reg = RidgeCV()
