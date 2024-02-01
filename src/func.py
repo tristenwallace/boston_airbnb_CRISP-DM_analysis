@@ -243,10 +243,20 @@ def get_language(input_text):
     likelihoods = get_language_likelihood(input_text)
     return sorted(likelihoods, key=likelihoods.get, reverse=True)[0]
 
-def get_sentiment_scores(data, text_col, plot=True):
+
+
+def clean_string(input_text):
+    word_list = re.sub(r'[^a-zA-Z]',' ', input_text.lower()).split()
+    filter_word_list = [w for w in word_list if w not in stopwords.words('english')]
+
+    return ' '.join(filter_word_list)
+
+
+
+def get_sentiment_scores(input_data, text_col, plot=True):
     '''
     INPUT
-        data (dataframe)
+        input_data (dataframe)
         text_col (str): name of column in data that contains text strings
         plot: plots histograms if true
     
@@ -257,8 +267,10 @@ def get_sentiment_scores(data, text_col, plot=True):
     sid = SentimentIntensityAnalyzer()
     df = pd.DataFrame()
     
+    text_data = input_data[text_col]
+    
     # Create dataframe for sentiment analysis
-    df[text_col] = [c for c in data[text_col] if get_language(c) in ['english', 'hinglish']]
+    df[text_col] = [c for c in text_data if get_language(c) in ['english', 'hinglish']]
     pscores = [sid.polarity_scores(text) for text in df[text_col]]
     df['compound'] = [score['compound'] for score in pscores]
     df['negativity'] = [score['neg'] for score in pscores]
