@@ -333,3 +333,4 @@ def plot_most_bar(df, x, y, title, max=10):
     ax.set_title(title)
     sns.despine()
     plt.show()
+    plt.savefig('../images/' + title)
