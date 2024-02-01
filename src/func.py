@@ -10,6 +10,7 @@ from sklearn.preprocessing import MinMaxScaler
 ######################################################################
 
 ### functions for imputing missing values with linear regression
+
 def is_linear_relationship(df, parameters, target, thresh=.5):
     ''' Checks if target variable has linear relationship with params
     
@@ -42,8 +43,8 @@ def is_linear_relationship(df, parameters, target, thresh=.5):
 
 ######################################################################
 
+### functions for bootstrapping T-Test
 
-### functions for bootstrapping T-Test 
 def boot_matrix(z, B):
     """ Create matrix of bootstrap samples
     
@@ -130,8 +131,8 @@ def bootstrap_t_pvalue(df, group, test, equal_var=False, B=10000, plot=False):
 
 ######################################################################
 
-
 # Functions for analyzing feature importance
+
 def normalize_data(df):
     ''' Normalize data
     
@@ -208,3 +209,75 @@ def coef_weights(coefficients, X_train):
     coefs_df = coefs_df.sort_values('abs_coefs', ascending=False)
     
     return coefs_df
+
+
+######################################################################
+
+# Functions for sentiment classification
+import re
+from nltk.tokenize import wordpunct_tokenize
+from nltk.corpus import stopwords
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+
+
+def get_language_likelihood(input_text):
+    """Return a dictionary of languages and their likelihood of being the 
+    natural language of the input text
+    """
+
+    input_text = input_text.lower()
+    input_words = wordpunct_tokenize(input_text)
+
+    language_likelihood = {}
+    total_matches = 0
+    for language in stopwords._fileids:
+        language_likelihood[language] = len(set(input_words) &
+                set(stopwords.words(language)))
+
+    return language_likelihood
+
+def get_language(input_text):
+    """Return the most likely language of the given text
+    """ 
+    likelihoods = get_language_likelihood(input_text)
+    return sorted(likelihoods, key=likelihoods.get, reverse=True)[0]
+
+def get_sentiment_scores(data, text_col, plot=True):
+    '''
+    INPUT
+        data (dataframe)
+        text_col (str): name of column in data that contains text strings
+        plot: plots histograms if true
+    
+    OUTPUT
+        df: dataframe of sentiment scores
+    '''
+    
+    sid = SentimentIntensityAnalyzer()
+    df = pd.DataFrame()
+    
+    # Create dataframe for sentiment analysis
+    df[text_col] = [c for c in data[text_col] if get_language(c) in ['english', 'hinglish']]
+    pscores = [sid.polarity_scores(text) for text in df[text_col]]
+    df['compound'] = [score['compound'] for score in pscores]
+    df['negativity'] = [score['neg'] for score in pscores]
+    df['neutrality'] = [score['neu'] for score in pscores]
+    df['positivity'] = [score['pos'] for score in pscores]
+    
+    if plot:
+        plt.subplots(figsize=(12.5, 7))
+
+        # Plot histograms for each sentiment score
+        sentiment_scores = ['compound','negativity','neutrality','positivity']
+        plot = 221
+        for score in sentiment_scores:
+            plt.subplot(plot)
+            plt.hist(df[score])
+            plt.title(score + ' Scores')
+            plt.xlabel('Scores')
+            plt.ylabel('Frequency')
+            plot += 1
+            plt.tight_layout();
+    
+    return df
