@@ -3,9 +3,15 @@ import pandas as pd
 import scipy.stats as stats
 import numpy as np
 from matplotlib import pyplot as plt
+import seaborn as sns
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+import re
+from nltk.tokenize import wordpunct_tokenize
+from nltk.corpus import stopwords
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import collections
 
 ######################################################################
 
@@ -214,12 +220,6 @@ def coef_weights(coefficients, X_train):
 ######################################################################
 
 # Functions for sentiment classification
-import re
-from nltk.tokenize import wordpunct_tokenize
-from nltk.corpus import stopwords
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-
-
 
 def get_language_likelihood(input_text):
     """Return a dictionary of languages and their likelihood of being the 
@@ -237,6 +237,7 @@ def get_language_likelihood(input_text):
 
     return language_likelihood
 
+
 def get_language(input_text):
     """Return the most likely language of the given text
     """ 
@@ -244,13 +245,11 @@ def get_language(input_text):
     return sorted(likelihoods, key=likelihoods.get, reverse=True)[0]
 
 
-
 def clean_string(input_text):
     word_list = re.sub(r'[^a-zA-Z]',' ', input_text.lower()).split()
     filter_word_list = [w for w in word_list if w not in stopwords.words('english')]
 
-    return ' '.join(filter_word_list)
-
+    return filter_word_list
 
 
 def get_sentiment_scores(input_data, text_col, plot=True):
@@ -293,3 +292,44 @@ def get_sentiment_scores(input_data, text_col, plot=True):
             plt.tight_layout();
     
     return df
+
+
+def count_words(word_lists):
+    ''' Get word counts from list of word lists
+    
+    INPUT
+        word_lists (series): list of lists of strings
+    
+    OUTPUT
+        words_count_df (dataframe): pandas dataframe of word counts
+    '''
+    
+    
+    # Initiate counter dictionary
+    words_count = collections.Counter()
+    
+    for word_list in word_lists:
+        for word in word_list:
+            words_count[word] += 1
+
+    # Convert words_count to dataframe
+    words_count_df = pd.DataFrame.from_dict(words_count, orient='index').reset_index()
+    words_count_df.rename(columns={'index':'word', 0:'count'}, inplace=True)
+
+    return words_count_df
+
+
+def plot_most_bar(df, x, y, title, max=10):
+    '''Plot bar chart top 'max' values
+    '''
+    
+    fig, ax = plt.subplots(figsize=(12.5, 7))
+
+    # Plot horizontal bar graph
+    df.sort_values(y, ascending=False)[0:max].plot.barh(x=x,
+                            y=y,
+                            ax=ax)
+
+    ax.set_title(title)
+    sns.despine()
+    plt.show()
